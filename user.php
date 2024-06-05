@@ -5,33 +5,34 @@ if (!isset($_SESSION["dni"])) {
     exit();
 }
 
-$dni = $_SESSION["dni"];
+$id_trabajador = $_SESSION["id_trabajador"];
 $nombre = $_SESSION["nombre"];
 $error = "";
+$mensaje = "";
 
 // Conectar a la base de datos
 include("conexion.php");
 
+// Verificar si ya ha registrado la entrada para hoy sin salida
+$sql = "SELECT COUNT(*) FROM registro WHERE id_trabajador = ? AND fecha = CURDATE() AND tipo = 'entrada' AND id_registro NOT IN (SELECT id_registro FROM registro WHERE id_trabajador = ? AND fecha = CURDATE() AND tipo = 'salida')";
+$stmt = $conn->prepare($sql);
+$stmt->bindParam(1, $id_trabajador);
+$stmt->bindParam(2, $id_trabajador);
+$stmt->execute();
+$ha_entrado = $stmt->fetchColumn() > 0;
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    if (isset($_POST["entrar"])) {
-        // Registrar la hora de entrada
-        $sql = "INSERT INTO registro (dni, hora_entrada) VALUES (?, NOW())";
+    $tipo = isset($_POST["entrar"]) ? 'entrada' : (isset($_POST["salir"]) ? 'salida' : null);
+    if ($tipo) {
+        $sql = "INSERT INTO registro (id_trabajador, fecha, tipo, timestamp) VALUES (?, CURDATE(), ?, NOW())";
         $stmt = $conn->prepare($sql);
-        $stmt->bindParam(1, $dni);
+        $stmt->bindParam(1, $id_trabajador);
+        $stmt->bindParam(2, $tipo);
         if ($stmt->execute()) {
-            $mensaje = "Hora de entrada registrada";
+            $mensaje = ucfirst($tipo) . " registrada con éxito";
+            $ha_entrado = ($tipo === 'entrada'); // Actualizar el estado
         } else {
-            $error = "Error al registrar la hora de entrada";
-        }
-    } elseif (isset($_POST["salir"])) {
-        // Registrar la hora de salida
-        $sql = "UPDATE registro SET hora_salida = NOW() WHERE dni = ? AND hora_salida IS NULL ORDER BY id DESC LIMIT 1";
-        $stmt = $conn->prepare($sql);
-        $stmt->bindParam(1, $dni);
-        if ($stmt->execute()) {
-            $mensaje = "Hora de salida registrada";
-        } else {
-            $error = "Error al registrar la hora de salida";
+            $error = "Error al registrar la " . $tipo;
         }
     }
 }
@@ -59,8 +60,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
                                 <form action="" method="post">
                                     <div class="pt-1 mb-4">
-                                        <button data-mdb-button-init data-mdb-ripple-init class="btn btn-dark btn-lg btn-block" type="submit" name="entrar" style="background-color: #ee2c2d; border-width: 2px;">Entrar</button>
-                                        <button data-mdb-button-init data-mdb-ripple-init class="btn btn-dark btn-lg btn-block" type="submit" name="salir" style="background-color: #ee2c2d; border-width: 2px;">Salir</button>
+                                        <?php if ($ha_entrado): ?>
+                                            <button data-mdb-button-init data-mdb-ripple-init class="btn btn-dark btn-lg btn-block" type="submit" name="salir" style="background-color: #ee2c2d; border-width: 2px;">Salir</button>
+                                        <?php else: ?>
+                                            <button data-mdb-button-init data-mdb-ripple-init class="btn btn-dark btn-lg btn-block" type="submit" name="entrar" style="background-color: #ee2c2d; border-width: 2px;">Entrar</button>
+                                        <?php endif; ?>
                                     </div>
                                     <?php
                                     if (!empty($mensaje)) {

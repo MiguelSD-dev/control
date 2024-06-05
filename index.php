@@ -11,14 +11,15 @@ if (isset($_POST["dni"])) {
     $dni = $_POST["dni"];
     $password = $_POST["password"];
 
-    $sql = "select * from trabajador where dni=? and password=?";
-
+    $sql = "SELECT * FROM trabajador WHERE dni=? AND password=?";
     $stmt = $conn->prepare($sql);
     $stmt->bindParam(1, $dni);
     $stmt->bindParam(2, $password);
     $stmt->execute();
+
     if ($stmt->rowCount() > 0) {
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        $_SESSION["id_trabajador"] = $row["id_trabajador"];
         $_SESSION["dni"] = $dni;
         $_SESSION["nombre"] = $row["nombre"];
         header("Location: user.php");
