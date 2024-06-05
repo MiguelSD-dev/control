@@ -18,7 +18,9 @@ if (isset($_POST["dni"])) {
     $stmt->bindParam(2, $password);
     $stmt->execute();
     if ($stmt->rowCount() > 0) {
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
         $_SESSION["dni"] = $dni;
+        $_SESSION["nombre"] = $row["nombre"];
         header("Location: user.php");
         exit();
     } else {
