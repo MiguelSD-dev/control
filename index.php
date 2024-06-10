@@ -124,7 +124,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['ajax'])) {
                                         <i class="fa-solid fa-eye fa-2x me-3"></i>
                                         <span class="h1 fw-bold mb-0">CONTROL</span>
                                     </div>
-                                    <h5 class="fw-normal mb-3 pb-3">Bienvenido, <span id="nombre-trabajador"></span>!</h5>
+                                    <h5 class="fw-normal mb-3 pb-3">Bienvenide, <span id="nombre-trabajador"></span>!</h5>
                                     <div class="pt-1 mb-4">
                                         <button id="entrar-button" class="btn btn-dark btn-lg btn-block">Entrar</button>
                                         <button id="salir-button" class="btn btn-dark btn-lg btn-block" style="display: none;">Salir</button>
