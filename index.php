@@ -46,7 +46,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['ajax'])) {
             echo json_encode(['success' => false, 'error' => 'DNI o password incorrectos']);
         }
         exit();
-        
     } elseif (isset($_SESSION['dni']) && isset($_POST['action'])) {
         $idtrabajador = $_SESSION['idtrabajador'];
         $action = $_POST['action'];
