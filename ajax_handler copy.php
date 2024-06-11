@@ -18,45 +18,33 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['ajax'])) {
             $_SESSION['dni'] = $dni;
             $_SESSION['nombre'] = $row['nombre'];
             $_SESSION['idtrabajador'] = $row['idtrabajador'];
-        
-            // Obtener todos los registros del trabajador para el día actual
-            $sql = "SELECT tipo, timestamp FROM registro WHERE idtrabajador = ? AND DATE(timestamp) = CURDATE() ORDER BY timestamp";
+
+            //Mostrar el ultimo registro
+            $sql = "SELECT tipo, timestamp FROM registro WHERE idtrabajador = ? ORDER BY timestamp DESC LIMIT 1";
             $stmt = $conn->prepare($sql);
             $stmt->bindParam(1, $row['idtrabajador']);
             $stmt->execute();
-            $registrosDia = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        
-            // Mostrar botón entrar si no existen registros previos o si el último registro es "salida"
+            $ultimoRegistro = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            //Mostrar boton entrar si no existen registros previos o si el ultimo registro es "salida"
             $mostrarEntrar = true;
-            if (!empty($registrosDia)) {
-                $ultimoRegistro = end($registrosDia);
+            if ($ultimoRegistro) {
                 $mostrarEntrar = ($ultimoRegistro['tipo'] == 'salida') ? true : false;
             }
-        
-            // Calcular el total de horas trabajadas en el día actual
-            $horasTrabajadas = 0;
-            $entradaTime = null;
-            foreach ($registrosDia as $registro) {
-                if ($registro['tipo'] == 'entrada') {
-                    $entradaTime = new DateTime($registro['timestamp']);
-                } elseif ($registro['tipo'] == 'salida' && $entradaTime) {
-                    $salidaTime = new DateTime($registro['timestamp']);
-                    $interval = $entradaTime->diff($salidaTime);
-                    $horasTrabajadas += $interval->h + ($interval->i / 60);
-                    $entradaTime = null;  // Reset entradaTime after calculating the interval
-                }
+
+            //Mostrar horas trabajadas
+            $horasTrabajadas = "No hay registro de entrada previo";
+            if ($ultimoRegistro && $ultimoRegistro['tipo'] == 'entrada') {
+                $entradaTime = new DateTime($ultimoRegistro['timestamp']);
+                $salidaTime = new DateTime();
+                $interval = $entradaTime->diff($salidaTime);
+                $horasTrabajadas = $interval->format('%h horas y %i minutos');
             }
-        
-            // Convertir horasTrabajadas a formato 'X horas y Y minutos'
-            $horas = floor($horasTrabajadas);
-            $minutos = round(($horasTrabajadas - $horas) * 60);
-            $horasTrabajadasFormatted = "$horas horas y $minutos minutos";
-        
-            echo json_encode(['success' => true, 'nombre' => $row['nombre'], 'mostrarEntrar' => $mostrarEntrar, 'ultimoRegistro' => $ultimoRegistro ?? null, 'horasTrabajadas' => $horasTrabajadasFormatted]);
+
+            echo json_encode(['success' => true, 'nombre' => $row['nombre'], 'mostrarEntrar' => $mostrarEntrar, 'ultimoRegistro' => $ultimoRegistro, 'horasTrabajadas' => $horasTrabajadas]);
         } else {
             echo json_encode(['success' => false, 'error' => 'DNI o password incorrectos']);
         }
-        
         exit();
 
     } elseif (isset($_SESSION['dni']) && isset($_POST['action'])) {
