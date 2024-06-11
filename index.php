@@ -34,14 +34,29 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['ajax'])) {
             $_SESSION['idtrabajador'] = $row['idtrabajador'];
 
             // Obtener el último registro del trabajador para determinar qué botón mostrar
-            $sql = "SELECT tipo FROM registro WHERE idtrabajador = ? ORDER BY timestamp DESC LIMIT 1";
+            $sql = "SELECT tipo, timestamp FROM registro WHERE idtrabajador = ? ORDER BY timestamp DESC LIMIT 1";
             $stmt = $conn->prepare($sql);
             $stmt->bindParam(1, $row['idtrabajador']);
             $stmt->execute();
             $ultimoRegistro = $stmt->fetch(PDO::FETCH_ASSOC);
-            $mostrarEntrar = ($ultimoRegistro && $ultimoRegistro['tipo'] == 'salida') ? true : false;
 
-            echo json_encode(['success' => true, 'nombre' => $row['nombre'], 'mostrarEntrar' => $mostrarEntrar]);
+            // Verificar si hay algún registro para el trabajador
+            $mostrarEntrar = true; // Por defecto, mostrar el botón "Entrar"
+            if ($ultimoRegistro) {
+                // Si hay un registro, mostrar el botón solo si es una "salida"
+                $mostrarEntrar = ($ultimoRegistro['tipo'] == 'salida') ? true : false;
+            }
+
+            // Calcular las horas trabajadas
+            $horasTrabajadas = "No hay registro de entrada previo";
+            if ($ultimoRegistro && $ultimoRegistro['tipo'] == 'entrada') {
+                $entradaTime = new DateTime($ultimoRegistro['timestamp']);
+                $salidaTime = new DateTime();
+                $interval = $entradaTime->diff($salidaTime);
+                $horasTrabajadas = $interval->format('%h horas y %i minutos');
+            }
+
+            echo json_encode(['success' => true, 'nombre' => $row['nombre'], 'mostrarEntrar' => $mostrarEntrar, 'ultimoRegistro' => $ultimoRegistro, 'horasTrabajadas' => $horasTrabajadas]);
         } else {
             echo json_encode(['success' => false, 'error' => 'DNI o password incorrectos']);
         }
@@ -73,6 +88,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['ajax'])) {
                 echo json_encode(['success' => false, 'error' => 'Error al registrar la hora de salida']);
             }
         }
+        
         exit();
     }
 }
@@ -124,12 +140,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['ajax'])) {
                                         <i class="fa-solid fa-eye fa-2x me-3"></i>
                                         <span class="h1 fw-bold mb-0">CONTROL</span>
                                     </div>
-                                    <h5 class="fw-normal mb-3 pb-3">Bienvenide, <span id="nombre-trabajador"></span>!</h5>
+                                    <h5 class="fw-normal mb-3 pb-3">Bienvenido, <span id="nombre-trabajador"></span>!</h5>
                                     <div class="pt-1 mb-4">
                                         <button id="entrar-button" class="btn btn-dark btn-lg btn-block">Entrar</button>
                                         <button id="salir-button" class="btn btn-dark btn-lg btn-block" style="display: none;">Salir</button>
                                         <p id="control-mensaje" class="success-message"></p>
                                         <p id="control-error" class="error-message"></p>
+                                        <p id="horas-trabajadas" class="info-message" style="display: none;"></p>
                                     </div>
                                 </div>
 
@@ -160,6 +177,13 @@ $(document).ready(function() {
                     $('#login-form').hide();
                     $('#nombre-trabajador').text(data.nombre);
                     $('#control-form').show();
+                    $('#horas-trabajadas').text('Horas trabajadas: ' + data.horasTrabajadas).show();
+                    // Mostrar las horas trabajadas si están disponibles
+                    if (data.horasTrabajadas) {
+                        $('#horas-trabajadas').text('Horas trabajadas: ' + data.horasTrabajadas).show();
+                    }
+                    
+                    // Mostrar el botón correcto (Entrar o Salir)
                     if (data.mostrarEntrar) {
                         $('#entrar-button').show();
                         $('#salir-button').hide();
@@ -221,3 +245,7 @@ $(document).ready(function() {
     });
 });
 </script>
+
+
+
+
