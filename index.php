@@ -14,9 +14,7 @@ include("includes/header.php"); ?>
         <div class="row d-flex justify-content-center align-items-center h-100">
             <div class="col col-xl-10">
                 <div class="card position-relative">
-                    <?php if (isset($_SESSION['dni'])): ?>
-                        <button id="logout-button" class="btn btn-danger position-absolute top-0 end-0 m-2" title="Salir">X</button>
-                    <?php endif; ?>
+                    <button id="logout-button" class="btn btn-danger position-absolute top-0 end-0 m-2" title="Salir" style="display: none;">X</button>
                     <div class="row g-0">
                         <div class="col-md-6 col-lg-5 d-none d-md-block">
                             <img src="assets/img/control.jpg" alt="login form" class="img-fluid" />

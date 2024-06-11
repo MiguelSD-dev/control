@@ -10,6 +10,7 @@ $(document).ready(function () {
                 try {
                     var data = JSON.parse(response);
                     if (data.success) {
+                        $('#logout-button').show();
                         $('#login-form').hide();
                         $('#nombre-trabajador').text(data.nombre);
                         $('#control-form').show();
