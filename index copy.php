@@ -1,13 +1,24 @@
 <?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+
 session_start();
 include("includes/conexion.php");
 include("includes/functions.php");
+
+procesarSolicitudAjax($conn); // Asegúrate de que esto maneje y salga correctamente para solicitudes AJAX
 
 $error = "";
 $mensaje = "";
 $ultimoUsuario = obtenerUltimoUsuario($conn);
 
-include("includes/header.php"); ?>
+// Solo incluye el HTML si no es una solicitud AJAX
+if (!isset($_POST['ajax'])) {
+?>
+
+<?php include("includes/header.php"); ?>
 
 <section class="vh-100">
     <div class="container py-5 h-100">
@@ -75,7 +86,13 @@ include("includes/header.php"); ?>
     </div>
 </section>
 
+<?php include("includes/footer.php"); ?>
+
+
+
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="assets/js/main.js"></script>
 
-<?php include("includes/footer.php"); ?>
+<?php
+} // Cierra el bloque if (!isset($_POST['ajax']))
+?>
